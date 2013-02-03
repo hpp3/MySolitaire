@@ -83,7 +83,7 @@ public class MainView extends View implements OnTouchListener {
 		mScreenSize.set(0, 0, w, h);
 		// Log.v("size ", mScreenSize.toString());
 		// Calculate card and decks sizes and positions
-		int cw = w / 11;
+		int cw = w / 15;
 		mCardSize.set(0, 0, cw, (int) (cw * 1.5));
 
 		int freeSize = w - cw * 7;
@@ -94,7 +94,7 @@ public class MainView extends View implements OnTouchListener {
 		for (Deck curDeck : decks) {
 			curDeck.resize(mCardSize.width(), mCardSize.height());
 		}
-
+		invalidate();
 	}
 
 	@Override
@@ -178,9 +178,9 @@ public class MainView extends View implements OnTouchListener {
 		invalidate();
 	}
 
-	public boolean legalMove(Card card, Deck destination) {
-		// TODO implement
-		return true;
+	public boolean legalMove(Card card, Deck dest) {
+		return (card.getValue() - dest.getCard(dest.getSize()-1).getValue() == -1);
+
 	}
 
 	public void moveStackToDeck(Deck parent, Deck dest, Card card) {
