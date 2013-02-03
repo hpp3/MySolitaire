@@ -34,7 +34,8 @@ public class MainView extends View implements OnTouchListener  {
 	private float oldX, oldY;
 
 	private Card activeCard;
-
+	ArrayList<Drawable> spadeImages;
+	
 	public MainView(Context context) {
 
 		super(context);
@@ -45,20 +46,24 @@ public class MainView extends View implements OnTouchListener  {
 		mCanvasPaint.setAntiAlias(false);
 
 
-		Drawable image = getResources().getDrawable(R.drawable.cardback);
-		Drawable image2 = getResources().getDrawable(R.drawable.spade1);
-		decks = new ArrayList<Deck>();
-		decks.add(new Deck(10, 10, mCardSize.width(), mCardSize.height(), deckType.foundation));
+		Drawable back = getResources().getDrawable(R.drawable.cardback);
 
-		decks.get(0).addCard(new Card(3, Suit.spade, image, decks.get(0), true));
-		decks.get(0).addCard(new Card(4, Suit.spade, image, decks.get(0), true));
-		decks.get(0).addCard(new Card(5, Suit.spade, image, decks.get(0), true));
-		decks.get(0).addCard(new Card(6, Suit.spade, image, decks.get(0), true));
-		decks.get(0).addCard(new Card(7, Suit.spade, image, decks.get(0), true));
-		decks.get(0).addCard(new Card(8, Suit.spade, image, decks.get(0), true));
-		decks.get(0).addCard(new Card(9, Suit.spade, image2, decks.get(0), true));
-		decks.add(new Deck(300, 10, mCardSize.width(), mCardSize.height(), deckType.tableau));
-		decks.get(1).addCard(new Card(10, Suit.spade, image2, decks.get(1), true));
+		spadeImages = new ArrayList<Drawable>();
+		
+		for (int i = 1; i <= 13; i++) {
+			spadeImages.add(getResources().getDrawable(getResources().getIdentifier("spade"+i, "drawable", "com.eddygao.mysolitaire")));
+		}
+
+		decks = new ArrayList<Deck>();
+		decks.add(new Deck(10, 10, mCardSize.width(), mCardSize.height(), deckType.tableau));
+
+		for (int i = 13; i > 0; i--) {
+			decks.get(0).addCard(new Card(i, Suit.spade, spadeImages.get(i-1), decks.get(0), true));
+		}
+
+		decks.add(new Deck(300, 10, mCardSize.width(), mCardSize.height(), deckType.foundation));
+		decks.get(1).addCard(new Card(10, Suit.spade, back, decks.get(1), true));
+		decks.add(new Deck(600, 10, mCardSize.width(), mCardSize.height(), deckType.waste));
 	}
 
 	
@@ -104,7 +109,7 @@ public class MainView extends View implements OnTouchListener  {
 			for (Deck curDeck : decks) {
 				curDeck.draw(canvas);
 			}
-		}
+		} 
 	}
 
 
@@ -170,21 +175,42 @@ public class MainView extends View implements OnTouchListener  {
 	}
 	
 	public boolean legalMove(Card card, Deck destination) {
+		//TODO implement
 		return true;
+	}
+	
+	public void moveStackToDeck(Deck parent, Deck dest, int value) {
+		for (int i = 0; i < parent.getSize(); i++) {
+			Card c = parent.getCard(i);
+			if (c.getValue() <= value) {
+				parent.removeCard(c);
+				dest.addCard(c);
+			}
+		}
 	}
 	
 	public void cardReleased(Card card, float x, float y) {
 		Deck parent = card.getParent();
 		parent.removeCard(card);
-		
 		Card position = cardUnderTouch(x, y);
+
 		if (position != null && legalMove(card, position.getParent())) {
 			position.getParent().addCard(card);
-		}
+			if (parent.getType() == deckType.tableau) 
+				moveStackToDeck(parent, position.getParent(), card.getValue());
+			}
 		else {
 			Deck deckPosition = deckUnderTouch(x, y);
-			if (null != deckPosition) deckPosition.addCard(card);
-			else parent.addCard(card);
+			if (null != deckPosition) {
+				deckPosition.addCard(card);
+				if (parent.getType() == deckType.tableau) 
+					moveStackToDeck(parent, deckPosition, card.getValue());
+			}
+			else{
+				parent.addCard(card);
+				if (parent.getType() == deckType.tableau) 
+					moveStackToDeck(parent, parent, card.getValue());
+			}
 			
 		}
 		invalidate();

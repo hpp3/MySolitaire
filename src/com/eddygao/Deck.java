@@ -39,9 +39,10 @@ public class Deck {
 	public void addCard(Card card) {
 		deck.add(card);
 		card.setParent(this);
-		Log.v("out", ""+ (y + height/2 + deck.size() * height));
+		Log.v("out", "~"+ (y + height/3*(deck.size()-1)));
 		if (deckType.tableau == this.type) card.moveTo(x, y + height/3*(deck.size()-1));
 		if (deckType.foundation == this.type || deckType.waste == this.type) card.moveTo(x, y);
+		Log.v("out", deck.toString());
 	}
 	
 	public void removeCard(Card card) {
@@ -56,7 +57,6 @@ public class Deck {
 		//draw deck, then draw cards
 		
 		canvas.drawRect(rectangle, border);
-		Log.v("rect size", rectangle.toString());
 		if (deckType.foundation == type || deckType.waste == type) {
 			if (deck.size() > 1) deck.get(deck.size()-2).draw(canvas);
 			if (deck.size() > 0) deck.get(deck.size()-1).draw(canvas);
