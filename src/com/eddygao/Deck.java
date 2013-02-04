@@ -76,6 +76,10 @@ public class Deck {
 	public int getSize() {
 		return deck.size();
 	}
+	
+	public boolean isEmpty() { 
+		return deck.size() == 0;
+	}
 
 	public int getX() {
 		return x;
@@ -104,7 +108,10 @@ public class Deck {
 	}
 
 	public Card topDeck() {
-		if (deck.size() == 0) return null;
+		if (deck.size() == 0) {
+			Log.wtf("out", "no top deck!!!");
+			return null;
+		}
 		return deck.get(deck.size()-1);
 	}
 

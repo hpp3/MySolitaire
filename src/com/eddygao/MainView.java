@@ -76,14 +76,19 @@ public class MainView extends View implements OnTouchListener {
 		for (int i = 1; i <= 7; i++) {
 			for (int j = 0; j < i; j++) {
 				Card chosen = undealt.remove(random.nextInt(undealt.size()));
-				if (j == i-1) chosen.setReveal(true);
+				if (j == i - 1)
+					chosen.setReveal(true);
 				chosen.setImage(cardImage(chosen));
-				decks.get(i+4).addCard(chosen);
+				decks.get(i + 4).addCard(chosen);
 			}
 		}
 		while (undealt.size() > 0) {
 			Card chosen = undealt.remove(random.nextInt(undealt.size()));
+			chosen.setReveal(true);
+			chosen.setImage(cardImage(chosen));
+
 			decks.get(0).addCard(chosen);
+			
 		}
 	}
 
@@ -225,7 +230,8 @@ public class MainView extends View implements OnTouchListener {
 		Deck parent = card.getParent();
 		if (parent.getType() == deckType.tableau) {
 			for (int i = 0; i < parent.getSize(); i++) {
-				if (parent.getCard(i).getValue() <= card.getValue() && card.isRevealed())
+				if (parent.getCard(i).getValue() <= card.getValue()
+						&& parent.getCard(i).isRevealed())
 					parent.getCard(i).moveByDelta((int) (newX - oldX),
 							(int) (newY - oldY));
 			}
@@ -236,24 +242,40 @@ public class MainView extends View implements OnTouchListener {
 		invalidate();
 	}
 
-	public boolean legalMove(Card card, Deck dest) {
+	public boolean legalMove(Card card, Deck dest, boolean singleMove) {
 		if (dest.getType() == deckType.waste)
 			return false;
 		else if (dest.getType() == deckType.foundation) {
-			if (card.getParent().topDeck() != card)
+			if (!singleMove) {
 				return false;
-			if (card.getSuit() != card.getParent().topDeck().getSuit())
+			}
+			if (dest.isEmpty()) {
+				if (card.getValue() != 1)
+					return false;
+				else return true;
+			} else if (card.getSuit() != dest.topDeck().getSuit()) {
+				Log.v("out","uh oh");
 				return false;
+			}
+
 		} else {
+
+			if (!dest.topDeck().isRevealed())
+				return false;
 			int parity = 0;
 			if (card.getSuit() == Suit.hearts
 					|| card.getSuit() == Suit.diamonds)
 				parity += 1;
-			if (card.getParent().topDeck().getSuit() == Suit.hearts
-					|| card.getParent().topDeck().getSuit() == Suit.diamonds)
+			if (dest.topDeck().getSuit() == Suit.hearts
+					|| dest.topDeck().getSuit() == Suit.diamonds)
 				parity += 1;
 			if (parity != 1)
 				return false;
+			if (dest.isEmpty()) {
+				if (card.getValue() != 13) 
+					return false;
+				else return true;
+			}
 		}
 		return (card.getValue() - dest.getCard(dest.getSize() - 1).getValue() == -1);
 
@@ -264,7 +286,7 @@ public class MainView extends View implements OnTouchListener {
 
 		for (int i = 0; i < parent.getSize(); i++) {
 			Card c = parent.getCard(i);
-			if (c.getValue() < card.getValue() && card.isRevealed()) {
+			if (c.getValue() < card.getValue() && c.isRevealed()) {
 				toMove.add(c);
 			}
 		}
@@ -279,10 +301,11 @@ public class MainView extends View implements OnTouchListener {
 
 	public void cardReleased(Card card, float x, float y) {
 		Deck parent = card.getParent();
+		boolean singleMove = (card == parent.topDeck());
 		parent.removeCard(card);
 		Card position = cardUnderTouch(x, y);
 
-		if (position != null && legalMove(card, position.getParent())) {
+		if (position != null && legalMove(card, position.getParent(), singleMove)) {
 
 			if (parent.getType() == deckType.tableau)
 				moveStackToDeck(parent, position.getParent(), card);
@@ -290,7 +313,7 @@ public class MainView extends View implements OnTouchListener {
 				position.getParent().addCard(card);
 		} else {
 			Deck deckPosition = deckUnderTouch(x, y);
-			if (null != deckPosition) {
+			if (null != deckPosition && legalMove(card, deckPosition, singleMove)) {
 
 				if (parent.getType() == deckType.tableau)
 					moveStackToDeck(parent, deckPosition, card);
