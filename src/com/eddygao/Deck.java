@@ -104,6 +104,7 @@ public class Deck {
 	}
 
 	public Card topDeck() {
+		if (deck.size() == 0) return null;
 		return deck.get(deck.size()-1);
 	}
 

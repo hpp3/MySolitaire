@@ -1,6 +1,7 @@
 package com.eddygao;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -32,9 +33,9 @@ public class MainView extends View implements OnTouchListener {
 	private int mCardCap;
 	private ArrayList<Deck> decks;
 	private float oldX, oldY;
-
+	Drawable back;
 	private Card activeCard;
-	ArrayList<Drawable> spadeImages;
+	ArrayList<Drawable> spadeImages, heartImages, diamondImages, clubImages;
 
 	public MainView(Context context) {
 
@@ -45,8 +46,49 @@ public class MainView extends View implements OnTouchListener {
 		mCanvasPaint.setColor(0xFF228B22); // Green background
 		mCanvasPaint.setAntiAlias(false);
 
-		Drawable back = getResources().getDrawable(R.drawable.cardback);
+		loadResources();
 
+		ArrayList<Card> undealt = new ArrayList<Card>();
+		for (int i = 1; i <= 13; i++) {
+			undealt.add(new Card(i, Suit.spades, null, false));
+			undealt.add(new Card(i, Suit.hearts, null, false));
+			undealt.add(new Card(i, Suit.diamonds, null, false));
+			undealt.add(new Card(i, Suit.clubs, null, false));
+		}
+
+		decks = new ArrayList<Deck>();
+		decks.add(new Deck(10, 10, mCardSize.width(), mCardSize.height(),
+				deckType.waste));
+		for (int i = 0; i < 4; i++) {
+			decks.add(new Deck(700 + 150 * i, 10, mCardSize.width(), mCardSize
+					.height(), deckType.foundation));
+		}
+
+		for (int i = 0; i < 7; i++) {
+			decks.add(new Deck(10 + 180 * i, 180, mCardSize.width(), mCardSize
+					.height(), deckType.tableau));
+		}
+		// deck[0] is waste
+		// deck[1-4] is foundation
+		// deck[5-11] are tableau
+
+		Random random = new Random();
+		for (int i = 1; i <= 7; i++) {
+			for (int j = 0; j < i; j++) {
+				Card chosen = undealt.remove(random.nextInt(undealt.size()));
+				if (j == i-1) chosen.setReveal(true);
+				chosen.setImage(cardImage(chosen));
+				decks.get(i+4).addCard(chosen);
+			}
+		}
+		while (undealt.size() > 0) {
+			Card chosen = undealt.remove(random.nextInt(undealt.size()));
+			decks.get(0).addCard(chosen);
+		}
+	}
+
+	private void loadResources() {
+		back = getResources().getDrawable(R.drawable.cardback);
 		spadeImages = new ArrayList<Drawable>();
 
 		for (int i = 1; i <= 13; i++) {
@@ -54,25 +96,41 @@ public class MainView extends View implements OnTouchListener {
 					getResources().getIdentifier("spade" + i, "drawable",
 							"com.eddygao.mysolitaire")));
 		}
+		heartImages = new ArrayList<Drawable>();
 
-		decks = new ArrayList<Deck>();
-		decks.add(new Deck(10, 10, mCardSize.width(), mCardSize.height(),
-				deckType.tableau));
-
-		for (int i = 13; i > 0; i--) {
-			decks.get(0).addCard(
-					new Card(i, Suit.spades, spadeImages.get(i - 1), decks
-							.get(0), true));
+		for (int i = 1; i <= 13; i++) {
+			heartImages.add(getResources().getDrawable(
+					getResources().getIdentifier("heart" + i, "drawable",
+							"com.eddygao.mysolitaire")));
 		}
+		diamondImages = new ArrayList<Drawable>();
 
-		decks.add(new Deck(300, 10, mCardSize.width(), mCardSize.height(),
-				deckType.foundation));
-		decks.get(1)
-				.addCard(new Card(10, Suit.spades, back, decks.get(1), true));
-		decks.add(new Deck(600, 10, mCardSize.width(), mCardSize.height(),
-				deckType.waste));
-		decks.add(new Deck(900, 10, mCardSize.width(), mCardSize.height(),
-				deckType.tableau));
+		for (int i = 1; i <= 13; i++) {
+			diamondImages.add(getResources().getDrawable(
+					getResources().getIdentifier("diamond" + i, "drawable",
+							"com.eddygao.mysolitaire")));
+		}
+		clubImages = new ArrayList<Drawable>();
+
+		for (int i = 1; i <= 13; i++) {
+			clubImages.add(getResources().getDrawable(
+					getResources().getIdentifier("club" + i, "drawable",
+							"com.eddygao.mysolitaire")));
+		}
+	}
+
+	public Drawable cardImage(Card card) {
+		if (!card.isRevealed())
+			return back;
+		if (card.getSuit() == Suit.spades)
+			return spadeImages.get(card.getValue() - 1);
+		if (card.getSuit() == Suit.hearts)
+			return heartImages.get(card.getValue() - 1);
+		if (card.getSuit() == Suit.diamonds)
+			return diamondImages.get(card.getValue() - 1);
+		if (card.getSuit() == Suit.clubs)
+			return clubImages.get(card.getValue() - 1);
+		return null;
 	}
 
 	@Override
@@ -167,7 +225,7 @@ public class MainView extends View implements OnTouchListener {
 		Deck parent = card.getParent();
 		if (parent.getType() == deckType.tableau) {
 			for (int i = 0; i < parent.getSize(); i++) {
-				if (parent.getCard(i).getValue() <= card.getValue())
+				if (parent.getCard(i).getValue() <= card.getValue() && card.isRevealed())
 					parent.getCard(i).moveByDelta((int) (newX - oldX),
 							(int) (newY - oldY));
 			}
@@ -179,18 +237,25 @@ public class MainView extends View implements OnTouchListener {
 	}
 
 	public boolean legalMove(Card card, Deck dest) {
-		if (dest.getType() == deckType.waste) return false;
+		if (dest.getType() == deckType.waste)
+			return false;
 		else if (dest.getType() == deckType.foundation) {
-			if (card.getParent().topDeck() != card) return false;
-			if (card.getSuit() != card.getParent().topDeck().getSuit()) return false;
-		}
-		else {
+			if (card.getParent().topDeck() != card)
+				return false;
+			if (card.getSuit() != card.getParent().topDeck().getSuit())
+				return false;
+		} else {
 			int parity = 0;
-			if (card.getSuit() == Suit.hearts || card.getSuit() == Suit.diamonds) parity += 1;
-			if (card.getParent().topDeck().getSuit() == Suit.hearts || card.getParent().topDeck().getSuit() == Suit.diamonds) parity += 1;
-			if (parity != 1) return false;
+			if (card.getSuit() == Suit.hearts
+					|| card.getSuit() == Suit.diamonds)
+				parity += 1;
+			if (card.getParent().topDeck().getSuit() == Suit.hearts
+					|| card.getParent().topDeck().getSuit() == Suit.diamonds)
+				parity += 1;
+			if (parity != 1)
+				return false;
 		}
-		return (card.getValue() - dest.getCard(dest.getSize()-1).getValue() == -1);
+		return (card.getValue() - dest.getCard(dest.getSize() - 1).getValue() == -1);
 
 	}
 
@@ -199,7 +264,7 @@ public class MainView extends View implements OnTouchListener {
 
 		for (int i = 0; i < parent.getSize(); i++) {
 			Card c = parent.getCard(i);
-			if (c.getValue() < card.getValue()) {
+			if (c.getValue() < card.getValue() && card.isRevealed()) {
 				toMove.add(c);
 			}
 		}
@@ -218,24 +283,25 @@ public class MainView extends View implements OnTouchListener {
 		Card position = cardUnderTouch(x, y);
 
 		if (position != null && legalMove(card, position.getParent())) {
-			
+
 			if (parent.getType() == deckType.tableau)
 				moveStackToDeck(parent, position.getParent(), card);
-			else 
+			else
 				position.getParent().addCard(card);
 		} else {
 			Deck deckPosition = deckUnderTouch(x, y);
 			if (null != deckPosition) {
-				
+
 				if (parent.getType() == deckType.tableau)
 					moveStackToDeck(parent, deckPosition, card);
-				else 
+				else
 					deckPosition.addCard(card);
 			} else {
-				
+
 				if (parent.getType() == deckType.tableau)
 					moveStackToDeck(parent, parent, card);
-				else parent.addCard(card);
+				else
+					parent.addCard(card);
 			}
 
 		}
