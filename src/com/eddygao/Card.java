@@ -12,7 +12,7 @@ public class Card {
 	private boolean revealed;
 	
 	public enum Suit {
-		heart, diamond, club, spade;
+		hearts, diamonds, clubs, spades;
 	}
 	private Suit suit;
 	

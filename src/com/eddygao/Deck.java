@@ -103,6 +103,9 @@ public class Deck {
 		
 	}
 
+	public Card topDeck() {
+		return deck.get(deck.size()-1);
+	}
 
 	
 	public void resize(int width, int height) {

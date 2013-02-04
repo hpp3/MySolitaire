@@ -61,14 +61,14 @@ public class MainView extends View implements OnTouchListener {
 
 		for (int i = 13; i > 0; i--) {
 			decks.get(0).addCard(
-					new Card(i, Suit.spade, spadeImages.get(i - 1), decks
+					new Card(i, Suit.spades, spadeImages.get(i - 1), decks
 							.get(0), true));
 		}
 
 		decks.add(new Deck(300, 10, mCardSize.width(), mCardSize.height(),
 				deckType.foundation));
 		decks.get(1)
-				.addCard(new Card(10, Suit.spade, back, decks.get(1), true));
+				.addCard(new Card(10, Suit.spades, back, decks.get(1), true));
 		decks.add(new Deck(600, 10, mCardSize.width(), mCardSize.height(),
 				deckType.waste));
 		decks.add(new Deck(900, 10, mCardSize.width(), mCardSize.height(),
@@ -179,6 +179,17 @@ public class MainView extends View implements OnTouchListener {
 	}
 
 	public boolean legalMove(Card card, Deck dest) {
+		if (dest.getType() == deckType.waste) return false;
+		else if (dest.getType() == deckType.foundation) {
+			if (card.getParent().topDeck() != card) return false;
+			if (card.getSuit() != card.getParent().topDeck().getSuit()) return false;
+		}
+		else {
+			int parity = 0;
+			if (card.getSuit() == Suit.hearts || card.getSuit() == Suit.diamonds) parity += 1;
+			if (card.getParent().topDeck().getSuit() == Suit.hearts || card.getParent().topDeck().getSuit() == Suit.diamonds) parity += 1;
+			if (parity != 1) return false;
+		}
 		return (card.getValue() - dest.getCard(dest.getSize()-1).getValue() == -1);
 
 	}
