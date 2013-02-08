@@ -2,6 +2,7 @@ package com.eddygao;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Stack;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -33,9 +34,12 @@ public class MainView extends View implements OnTouchListener {
 	private int mCardCap;
 	private ArrayList<Deck> decks;
 	private float oldX, oldY;
-	Drawable back;
+	private Drawable back;
 	private Card activeCard;
-	ArrayList<Drawable> spadeImages, heartImages, diamondImages, clubImages;
+	private ArrayList<Drawable> spadeImages, heartImages, diamondImages,
+			clubImages;
+
+	private Stack<Action> actions = new Stack();
 
 	public MainView(Context context) {
 
@@ -47,7 +51,7 @@ public class MainView extends View implements OnTouchListener {
 		mCanvasPaint.setAntiAlias(false);
 
 		loadResources();
-
+		
 		ArrayList<Card> undealt = new ArrayList<Card>();
 		for (int i = 1; i <= 13; i++) {
 			undealt.add(new Card(i, Suit.spades, null, false));
@@ -58,9 +62,10 @@ public class MainView extends View implements OnTouchListener {
 
 		decks = new ArrayList<Deck>();
 		for (int i = 0; i < 2; i++) {
-			decks.add(new Deck(10 + 130*i, 10, mCardSize.width(), mCardSize.height(), deckType.waste));
+			decks.add(new Deck(10 + 130 * i, 10, mCardSize.width(), mCardSize
+					.height(), deckType.waste));
 		}
-				
+
 		for (int i = 0; i < 4; i++) {
 			decks.add(new Deck(700 + 150 * i, 10, mCardSize.width(), mCardSize
 					.height(), deckType.foundation));
@@ -202,6 +207,12 @@ public class MainView extends View implements OnTouchListener {
 		return null;
 	}
 
+	public void undo() {
+		if (actions.size() == 0)
+			return;
+		actions.pop().undo();
+	}
+
 	@Override
 	public boolean onTouch(View v, MotionEvent e) {
 		int action = e.getAction();
@@ -214,8 +225,9 @@ public class MainView extends View implements OnTouchListener {
 				if (card.isRevealed())
 					activeCard = card;
 				else {
-					
+
 					if (card.getParent().topDeck() == card) {
+						actions.push(new Action(card, this));
 						card.setReveal(true);
 						card.setImage(cardImage(card));
 						invalidate();
@@ -255,11 +267,13 @@ public class MainView extends View implements OnTouchListener {
 		invalidate();
 	}
 
+
+	
 	public boolean legalMove(Card card, Deck dest, boolean singleMove) {
 		if (!card.isRevealed())
 			return false;
 		if (dest.getType() == deckType.waste)
-			return card.getParent().getType()==deckType.waste;
+			return card.getParent().getType() == deckType.waste;
 		else if (dest.getType() == deckType.foundation) {
 			if (!singleMove) {
 				return false;
@@ -272,6 +286,8 @@ public class MainView extends View implements OnTouchListener {
 			} else if (card.getSuit() != dest.topDeck().getSuit()) {
 				return false;
 			}
+			return (card.getValue()
+					- dest.getCard(dest.getSize() - 1).getValue() == 1);
 
 		} else {
 			if (dest.isEmpty()) {
@@ -324,27 +340,29 @@ public class MainView extends View implements OnTouchListener {
 		if (position != null
 				&& legalMove(card, position.getParent(), singleMove)) {
 
-			if (parent.getType() == deckType.tableau)
-				moveStackToDeck(parent, position.getParent(), card);
-			else
-				position.getParent().addCard(card);
+			moveToDeck(parent, position.getParent(), card);
+			actions.push(new Action(parent, card, this));
 		} else {
 			Deck deckPosition = deckUnderTouch(x, y);
 			if (null != deckPosition
 					&& legalMove(card, deckPosition, singleMove)) {
 
-				if (parent.getType() == deckType.tableau)
-					moveStackToDeck(parent, deckPosition, card);
-				else
-					deckPosition.addCard(card);
+				moveToDeck(parent, deckPosition, card);
+				actions.push(new Action(parent, card, this));
 			} else {
-
-				if (parent.getType() == deckType.tableau)
-					moveStackToDeck(parent, parent, card);
-				else
-					parent.addCard(card);
+				moveToDeck(parent, parent, card);
 			}
 
+		}
+
+	}
+
+	public void moveToDeck(Deck src, Deck dst, Card card) {
+		if (src.getType() == deckType.tableau
+				&& dst.getType() == deckType.tableau) {
+			moveStackToDeck(src, dst, card);
+		} else {
+			dst.addCard(card);
 		}
 		invalidate();
 	}

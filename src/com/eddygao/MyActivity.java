@@ -24,4 +24,8 @@ public class MyActivity extends Activity{
         setContentView(mainView);
                 
     }
+	@Override
+	public void onBackPressed() {
+		mainView.undo();
+	}
 }

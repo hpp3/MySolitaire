@@ -44,7 +44,7 @@ public class Card {
 	public boolean isRevealed() {
 		return revealed;
 	}
-
+	
 	public int getValue() {
 		return value;
 	}
