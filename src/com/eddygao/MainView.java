@@ -61,10 +61,13 @@ public class MainView extends View implements OnTouchListener {
 		}
 
 		decks = new ArrayList<Deck>();
-		for (int i = 0; i < 2; i++) {
-			decks.add(new Deck(10 + 130 * i, 10, mCardSize.width(), mCardSize
-					.height(), deckType.waste));
-		}
+		
+		decks.add(new Deck(10, 10, mCardSize.width(), mCardSize
+				.height(), back));
+		
+		decks.add(new Deck(140, 10, mCardSize.width(), mCardSize
+				.height(), deckType.waste));
+		
 
 		for (int i = 0; i < 4; i++) {
 			decks.add(new Deck(700 + 150 * i, 10, mCardSize.width(), mCardSize
@@ -75,7 +78,7 @@ public class MainView extends View implements OnTouchListener {
 			decks.add(new Deck(10 + 180 * i, 180, mCardSize.width(), mCardSize
 					.height(), deckType.tableau));
 		}
-		// deck[0-1] is waste
+		// deck[0-1] is waste/deal
 		// deck[2-5] is foundation
 		// deck[6-12] are tableau
 
@@ -212,6 +215,23 @@ public class MainView extends View implements OnTouchListener {
 			return;
 		actions.pop().undo();
 	}
+	
+	public void deal() {
+		if(!decks.get(1).isEmpty()) {
+			decks.get(0).addCard(decks.get(1).topDeck());
+			decks.get(1).removeCard(decks.get(1).topDeck());
+			actions.push(new Action(decks.get(0), decks.get(0).topDeck(), this));
+			invalidate();
+		}
+		else {
+			while(!decks.get(0).isEmpty()) {
+				decks.get(1).addCard(decks.get(0).topDeck());
+				decks.get(0).removeCard(decks.get(0).topDeck());
+			
+			}
+			actions.push(new Action(decks.get(0), decks.get(1), this));
+		}
+	}
 
 	@Override
 	public boolean onTouch(View v, MotionEvent e) {
@@ -220,6 +240,14 @@ public class MainView extends View implements OnTouchListener {
 		if (action == MotionEvent.ACTION_DOWN) {
 			oldX = e.getX();
 			oldY = e.getY();
+
+			Deck deck = deckUnderTouch(e.getX(), e.getY());
+			if (deck != null) {
+				if (deck.getType() == deckType.deal) {
+					deal();
+					return true;
+				}
+			}
 			Card card = cardUnderTouch(e.getX(), e.getY());
 			if (card != null) {
 				if (card.isRevealed())
@@ -235,6 +263,7 @@ public class MainView extends View implements OnTouchListener {
 					}
 				}
 			}
+
 		}
 		if (action == MotionEvent.ACTION_MOVE) {
 			if (activeCard != null) {
@@ -276,6 +305,7 @@ public class MainView extends View implements OnTouchListener {
 					flag = false;
 					for (Deck fdeck : decks) {
 						if (fdeck.getType() == deckType.foundation) {
+							
 							Log.v("out", "check");
 							Card card = deck.topDeck();
 							if (card != null) {

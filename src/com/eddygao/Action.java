@@ -4,10 +4,10 @@ import android.view.View;
 
 public class Action {
 	public enum ActionType {
-		move, flip;
+		move, flip, dump;
 	}
 	private ActionType action;
-	private Deck src;
+	private Deck src, dst;
 	private Card card;
 	private MainView parentView;
 	
@@ -24,6 +24,12 @@ public class Action {
 		this.parentView = parent;
 	}
 	
+	public Action(Deck src, Deck dst, MainView parent) {
+		action = ActionType.dump;
+		this.src = src;
+		this.dst = dst;
+		this.parentView = parent;
+	}
 	
 	public void undo() {
 		if (action == ActionType.move) { 
@@ -35,6 +41,12 @@ public class Action {
 			card.setReveal(!card.isRevealed());
 			card.setImage(parentView.cardImage(card));
 			parentView.invalidate();
+		}
+		if (action == ActionType.dump) {
+			while (!dst.isEmpty()) {
+				src.addCard(dst.topDeck());
+				dst.removeCard(dst.topDeck());
+			}
 		}
 	}
 }

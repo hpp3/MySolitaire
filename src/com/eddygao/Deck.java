@@ -6,19 +6,20 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 public class Deck {
 	private ArrayList<Card> deck;
 	private int x, y, width, height;
 	public enum deckType {
-		tableau, foundation, waste;
+		tableau, foundation, waste, deal;
 	}
 	private deckType type;
 	private Paint border;
 	private Rect rectangle;
+	private Drawable image;
 
-	
 	public Deck(int x, int y, int width, int height, deckType type) {
 		deck = new ArrayList<Card>();
 		this.x = x;
@@ -32,7 +33,24 @@ public class Deck {
 		border.setStrokeWidth(2);
 		border.setColor(Color.WHITE);
 		rectangle = new Rect(x,y,x+width,y+height);
-
+		if (type == deckType.deal);
+		rectangle.inset(-3, -3);
+	}
+	
+	public Deck(int x, int y, int width, int height, Drawable image) {
+		deck = new ArrayList<Card>();
+		this.x = x;
+		this.y = y;
+		this.width = width;
+		this.height = height;
+		this.type = deckType.deal;
+		border = new Paint();
+		border.setAntiAlias(false);
+		border.setStyle(Paint.Style.STROKE);
+		border.setStrokeWidth(2);
+		border.setColor(Color.WHITE);
+		rectangle = new Rect(x,y,x+width,y+height);
+		this.image = image;
 		rectangle.inset(-3, -3);
 	}
 	
@@ -66,6 +84,11 @@ public class Deck {
 				card.draw(canvas);
 			}
 		}
+		if (deckType.deal == type) {
+			image.setBounds(x, y, x+width, y+height);
+			image.draw(canvas);
+		}
+
 		
 	}
 	
