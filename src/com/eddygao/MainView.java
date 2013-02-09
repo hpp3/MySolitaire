@@ -216,7 +216,7 @@ public class MainView extends View implements OnTouchListener {
 	@Override
 	public boolean onTouch(View v, MotionEvent e) {
 		int action = e.getAction();
-		Log.v("out", "hi!");
+
 		if (action == MotionEvent.ACTION_DOWN) {
 			oldX = e.getX();
 			oldY = e.getY();
@@ -267,7 +267,33 @@ public class MainView extends View implements OnTouchListener {
 		invalidate();
 	}
 
+	public void snapUp() {
+		Log.v("out", "snapping up");
+		for (Deck deck : decks) {
+			if (deck.getType() == deckType.tableau) {
+				boolean flag = true;
+				while (flag) {
+					flag = false;
+					for (Deck fdeck : decks) {
+						if (fdeck.getType() == deckType.foundation) {
+							Log.v("out", "check");
+							Card card = deck.topDeck();
+							if (card != null) {
+								if (legalMove(deck.topDeck(), fdeck, true)) {
+									Log.v("out", "legal move");
 
+									deck.removeCard(card);
+									moveToDeck(deck, fdeck, card);
+									actions.push(new Action(deck, card, this));
+									flag = true;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 	
 	public boolean legalMove(Card card, Deck dest, boolean singleMove) {
 		if (!card.isRevealed())
@@ -363,6 +389,7 @@ public class MainView extends View implements OnTouchListener {
 			moveStackToDeck(src, dst, card);
 		} else {
 			dst.addCard(card);
+			if (dst.getType() == deckType.foundation) snapUp();
 		}
 		invalidate();
 	}
