@@ -40,6 +40,10 @@ public class Card {
 		return (x > this.x && x < (this.x + parentDeck.getWidth())
 				&& y > this.y && y < (this.y + parentDeck.getHeight()));
 	}
+	
+	public String toString() {
+		return "Value: "+this.value+", suit: "+this.suit;
+	}
 
 	public boolean isRevealed() {
 		return revealed;

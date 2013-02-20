@@ -190,8 +190,10 @@ public class MainView extends View implements OnTouchListener {
 
 	public Card cardUnderTouch(float x, float y) {
 		for (Deck deck : decks) {
+			if (deck == decks.get(0)) continue;
 			for (int i = deck.getSize() - 1; i >= 0; i--) {
 				Card card = deck.getCard(i);
+				Log.v("out", "check touch: "+card.toString());
 				if (card.inCard(x, y)) {
 					return card;
 				}
@@ -220,7 +222,7 @@ public class MainView extends View implements OnTouchListener {
 		if(!decks.get(1).isEmpty()) {
 			decks.get(0).addCard(decks.get(1).topDeck());
 			decks.get(1).removeCard(decks.get(1).topDeck());
-			actions.push(new Action(decks.get(0), decks.get(0).topDeck(), this));
+			actions.push(new Action(decks.get(1), decks.get(0).topDeck(), this));
 			invalidate();
 		}
 		else {
@@ -229,6 +231,7 @@ public class MainView extends View implements OnTouchListener {
 				decks.get(0).removeCard(decks.get(0).topDeck());
 			
 			}
+			invalidate();
 			actions.push(new Action(decks.get(0), decks.get(1), this));
 		}
 	}
@@ -298,6 +301,7 @@ public class MainView extends View implements OnTouchListener {
 
 	public void snapUp() {
 		Log.v("out", "snapping up");
+		
 		for (Deck deck : decks) {
 			if (deck.getType() == deckType.tableau) {
 				boolean flag = true;
@@ -306,7 +310,6 @@ public class MainView extends View implements OnTouchListener {
 					for (Deck fdeck : decks) {
 						if (fdeck.getType() == deckType.foundation) {
 							
-							Log.v("out", "check");
 							Card card = deck.topDeck();
 							if (card != null) {
 								if (legalMove(deck.topDeck(), fdeck, true)) {

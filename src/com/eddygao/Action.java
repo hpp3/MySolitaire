@@ -36,6 +36,7 @@ public class Action {
 			Deck parent = card.getParent();
 			parent.removeCard(card);
 			parentView.moveToDeck(parent, src, card); 
+			parentView.invalidate();
 		}
 		if (action == ActionType.flip) {
 			card.setReveal(!card.isRevealed());
@@ -47,6 +48,7 @@ public class Action {
 				src.addCard(dst.topDeck());
 				dst.removeCard(dst.topDeck());
 			}
+			parentView.invalidate();
 		}
 	}
 }
